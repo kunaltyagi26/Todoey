@@ -14,7 +14,7 @@ class ToDoListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let toDoItems = self.defaults.value(forKey: "items") as? [String] {
+        if let toDoItems = self.defaults.array(forKey: "items") as? [String] {
             items = toDoItems
         }
     }
