@@ -9,10 +9,36 @@
 import UIKit
 
 class ToDoListViewController: UITableViewController {
-    fileprivate let items = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
+    fileprivate var items = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
+    let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        if let toDoItems = self.defaults.value(forKey: "items") as? [String] {
+            items = toDoItems
+        }
+    }
+    
+    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: "Add new Todoey item", message: "", preferredStyle: .alert)
+            let addAction  = UIAlertAction(title: "Add Item", style: .default) { (action) in
+                if let item = alert.textFields?.first?.text, item != "" {
+                    self.items.append(item)
+                    self.defaults.set(self.items, forKey: "items")
+                    self.tableView.beginUpdates()
+                    self.tableView.insertRows(at: [IndexPath(row: self.items.count - 1, section: 0)], with: .fade)
+                    self.tableView.endUpdates()
+                }
+            }
+            let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+            alert.addTextField { (textField) in
+                textField.placeholder = "Create new item."
+            }
+            alert.addAction(addAction)
+            alert.addAction(cancelAction)
+            self.present(alert, animated: true, completion: nil)
+        }
     }
 
     // MARK: - Table view data source
@@ -39,5 +65,16 @@ class ToDoListViewController: UITableViewController {
         }
         
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        cell.alpha = 0
+
+        UIView.animate(
+            withDuration: 0.5,
+            delay: 0.05 * Double(indexPath.row),
+            animations: {
+                cell.alpha = 1
+        })
     }
 }

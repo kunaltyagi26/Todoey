@@ -29,7 +29,14 @@
                             <outlet property="delegate" destination="323-S0-VGR" id="P0b-cc-rYz"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" title="Todoey" id="BRo-lb-Xt3"/>
+                    <navigationItem key="navigationItem" title="Todoey" id="BRo-lb-Xt3">
+                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="37U-ro-zaN">
+                            <color key="tintColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                            <connections>
+                                <action selector="addButtonPressed:" destination="323-S0-VGR" id="03H-cF-kqU"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="yZw-la-1u5" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
@@ -45,6 +52,7 @@
                         <autoresizingMask key="autoresizingMask"/>
                         <color key="barTintColor" systemColor="systemBlueColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <textAttributes key="titleTextAttributes">
+                            <fontDescription key="fontDescription" style="UICTFontTextStyleTitle2"/>
                             <color key="textColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
                         </textAttributes>
                         <textAttributes key="largeTitleTextAttributes">
