@@ -9,13 +9,15 @@
 import UIKit
 
 class ToDoListViewController: UITableViewController {
-    fileprivate var items = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
+    fileprivate var items: [Items] = [Items(itemName: "Find Mike", isSelected: false), Items(itemName: "Buy Eggos", isSelected: false), Items(itemName: "Destroy Demogorgon", isSelected: false)]
     let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let toDoItems = self.defaults.array(forKey: "items") as? [String] {
-            items = toDoItems
+        if let toDoItems = self.defaults.data(forKey: "items") {
+            if let decodedItems = NSKeyedUnarchiver.unarchiveObject(with: toDoItems) as? [Items] {
+                items = decodedItems
+            }
         }
     }
     
@@ -24,8 +26,11 @@ class ToDoListViewController: UITableViewController {
             let alert = UIAlertController(title: "Add new Todoey item", message: "", preferredStyle: .alert)
             let addAction  = UIAlertAction(title: "Add Item", style: .default) { (action) in
                 if let item = alert.textFields?.first?.text, item != "" {
-                    self.items.append(item)
-                    self.defaults.set(self.items, forKey: "items")
+                    let itemObject = Items(itemName: item, isSelected: false)
+                    self.items.append(itemObject)
+                    let encodedItems: Data = NSKeyedArchiver.archivedData(withRootObject: self.items)
+                    self.defaults.set(encodedItems, forKey: "items")
+                    self.defaults.synchronize()
                     self.tableView.beginUpdates()
                     self.tableView.insertRows(at: [IndexPath(row: self.items.count - 1, section: 0)], with: .fade)
                     self.tableView.endUpdates()
@@ -53,17 +58,15 @@ class ToDoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "toDoItemCell") else { return UITableViewCell() }
-        cell.textLabel?.text = items[indexPath.row]
+        let item = items[indexPath.row]
+        cell.textLabel?.text = item.itemName
+        cell.accessoryType = item.isSelected ? .checkmark : .none
         return cell
     }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        } else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        }
-        
+        items[indexPath.row].isSelected.toggle()
+        self.tableView.reloadRows(at: [indexPath], with: .fade)
         tableView.deselectRow(at: indexPath, animated: true)
     }
     

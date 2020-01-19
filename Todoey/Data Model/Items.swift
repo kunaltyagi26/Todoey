@@ -8,7 +8,23 @@
 
 import Foundation
 
-struct Items {
-    let itemName: String
-    let isSelected: Bool
+class Items: NSObject, NSCoding {
+    var itemName: String = ""
+    var isSelected: Bool = false
+    
+    init(itemName: String, isSelected: Bool) {
+        self.itemName = itemName
+        self.isSelected = isSelected
+    }
+    
+    required convenience init?(coder: NSCoder) {
+        guard let itemName = coder.decodeObject(forKey: "itemName") as? String else { return nil }
+        let isSelected = coder.decodeBool(forKey: "isSelected")
+        self.init(itemName: itemName, isSelected: isSelected)
+    }
+    
+    func encode(with coder: NSCoder) {
+        coder.encode(itemName, forKey: "itemName")
+        coder.encode(isSelected, forKey: "isSelected")
+    }
 }
