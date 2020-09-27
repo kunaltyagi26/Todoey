@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Item: Codable {
+/*class Item: Codable {
     var itemName: String = ""
     var isSelected: Bool = false
     
@@ -16,4 +16,4 @@ class Item: Codable {
         self.itemName = itemName
         self.isSelected = isSelected
     }
-}
+}*/
