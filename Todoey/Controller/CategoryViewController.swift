@@ -8,15 +8,20 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
 
-    fileprivate var categories: [Category] = []
+    //fileprivate var categories: [Category] = []
+    fileprivate var categories: Results<CategoryRealm>?
     let context = (UIApplication.shared.delegate as? AppDelegate)?.persistentContainer.viewContext
+    
+    let realm = try! Realm()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadItems()
+        //loadItems()
+        loadCategories()
         NotificationCenter.default.addObserver(self, selector: #selector(contextDidSave(_:)), name: Notification.Name.NSManagedObjectContextDidSave, object: nil)
     }
     
@@ -40,7 +45,7 @@ class CategoryViewController: UITableViewController {
             let alert = UIAlertController(title: "Add new new category", message: "", preferredStyle: .alert)
             let addAction  = UIAlertAction(title: "Add Category", style: .default) { _ in
                 if let category = alert.textFields?.first?.text, category != "" {
-                    let childContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
+                    /*let childContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
                     childContext.parent = self.context
                     let newCategory = Category(context: childContext)
                     newCategory.name = category
@@ -53,7 +58,8 @@ class CategoryViewController: UITableViewController {
                     self.categories.append(newCategory)
                     self.tableView.beginUpdates()
                     self.tableView.insertRows(at: [IndexPath(row: self.categories.count - 1, section: 0)], with: .fade)
-                    self.tableView.endUpdates()
+                    self.tableView.endUpdates()*/
+                    
                     /*if let context = self.context {
                         let newCategory = Category(context: context)
                         newCategory.name = category
@@ -63,6 +69,10 @@ class CategoryViewController: UITableViewController {
                         self.tableView.insertRows(at: [IndexPath(row: self.categories.count - 1, section: 0)], with: .fade)
                         self.tableView.endUpdates()
                     }*/
+                    
+                    let newCategory = CategoryRealm()
+                    newCategory.name = category
+                    self.saveRealmCategories(category: newCategory)
                 }
             }
             let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
@@ -85,12 +95,26 @@ class CategoryViewController: UITableViewController {
         }
     }
     
+    func saveRealmCategories(category: CategoryRealm) {
+        do {
+            try realm.write({
+                realm.add(category)
+                /*self.tableView.beginUpdates()
+                self.tableView.insertRows(at: [IndexPath(row: self.categories?.count ?? 1 - 1, section: 0)], with: .automatic)
+                self.tableView.endUpdates()*/
+                self.tableView.reloadData()
+            })
+        } catch {
+            print("Error is:", error)
+        }
+    }
+    
     func loadItems(with request: NSFetchRequest<Category> = NSFetchRequest<Category>(entityName: "Category")) {
         let privateContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
         privateContext.persistentStoreCoordinator = context?.persistentStoreCoordinator
         privateContext.performAndWait {
             do {
-                self.categories = try privateContext.fetch(request)
+                //self.categories = try privateContext.fetch(request)
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
                 }
@@ -121,6 +145,11 @@ class CategoryViewController: UITableViewController {
         }*/
     }
     
+    func loadCategories() {
+        categories = realm.objects(CategoryRealm.self)
+        self.tableView.reloadData()
+    }
+    
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -130,12 +159,12 @@ class CategoryViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return categories.count
+        return categories?.count ?? 1
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath)
-        cell.textLabel?.text = categories[indexPath.row].name
+        cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories added."
         return cell
     }
     
@@ -147,8 +176,8 @@ class CategoryViewController: UITableViewController {
                 let alert = UIAlertController(title: "Edit the category", message: "", preferredStyle: .alert)
                 let addAction  = UIAlertAction(title: "Edit Category", style: .default) { _ in
                     if let category = alert.textFields?.first?.text, category != "" {
-                        let categoryTobeEdited = self.categories[indexPath.row]
-                        categoryTobeEdited.name = category
+                        let categoryTobeEdited = self.categories?[indexPath.row]
+                        categoryTobeEdited?.name = category
                         self.saveCategories()
                         self.tableView.reloadRows(at: [indexPath], with: .right)
                         completion(true)
@@ -159,7 +188,7 @@ class CategoryViewController: UITableViewController {
                 })
                 alert.addTextField { (textField) in
                     textField.placeholder = "Edit the category."
-                    textField.text = self.categories[indexPath.row].name
+                    textField.text = self.categories?[indexPath.row].name
                 }
                 alert.addAction(addAction)
                 alert.addAction(cancelAction)
@@ -171,9 +200,9 @@ class CategoryViewController: UITableViewController {
             title: "Delete",
             handler: { (_, _, completion) in
                 if let context = self.context {
-                    context.delete(self.categories[indexPath.row])
+                    //context.delete(self.categories[indexPath.row])
                     self.saveCategories()
-                    self.categories.remove(at: indexPath.row)
+                    //self.categories.remove(at: indexPath.row)
                     self.tableView.deleteRows(at: [indexPath], with: .automatic)
                     completion(true)
                 }
@@ -193,7 +222,7 @@ class CategoryViewController: UITableViewController {
         if segue.identifier == "goToItems" {
             guard let destination = segue.destination as? ToDoListViewController else { return }
             guard let selectedCategoryIndex = tableView.indexPathForSelectedRow else { return }
-            destination.selectedCategory = categories[selectedCategoryIndex.row]
+            destination.selectedCategory = categories?[selectedCategoryIndex.row]
         }
     }
 }
