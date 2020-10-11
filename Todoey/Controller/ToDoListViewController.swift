@@ -9,6 +9,7 @@
 import UIKit
 import CoreData
 import RealmSwift
+import ChameleonFramework
 
 class ToDoListViewController: UITableViewController {
     @IBOutlet weak var searchBar: UISearchBar!
@@ -34,6 +35,8 @@ class ToDoListViewController: UITableViewController {
         setupSearchBar()
         //loadItems()
         loadRealmItems()
+        self.tableView.rowHeight = 80.0
+        self.tableView.separatorStyle = .none
     }
     
     func setupSearchBar() {
@@ -153,8 +156,12 @@ class ToDoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "toDoItemCell") else { return UITableViewCell() }
-        if let item = itemResults?[indexPath.row] {
+        if let item = itemResults?[indexPath.row], let selectedCatagoryColor = selectedCategory?.color {
             cell.textLabel?.text = item.title
+            if let count = itemResults?.count, let color = UIColor(hexString: selectedCatagoryColor)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(count)) {
+                cell.backgroundColor = color
+                cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
+            }
             cell.accessoryType = item.done ? .checkmark : .none
         } else {
             cell.textLabel?.text = "No items added."

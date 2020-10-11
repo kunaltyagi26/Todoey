@@ -9,6 +9,7 @@
 import UIKit
 import CoreData
 import RealmSwift
+import ChameleonFramework
 
 class CategoryViewController: UITableViewController {
 
@@ -23,6 +24,8 @@ class CategoryViewController: UITableViewController {
         //loadItems()
         loadCategories()
         NotificationCenter.default.addObserver(self, selector: #selector(contextDidSave(_:)), name: Notification.Name.NSManagedObjectContextDidSave, object: nil)
+        self.tableView.rowHeight = 80.0
+        self.tableView.separatorStyle = .none
     }
     
     @objc func contextDidSave(_ notification: Notification) {
@@ -72,6 +75,7 @@ class CategoryViewController: UITableViewController {
                     
                     let newCategory = CategoryRealm()
                     newCategory.name = category
+                    newCategory.color = UIColor.randomFlat().hexValue()
                     self.saveRealmCategories(category: newCategory)
                 }
             }
@@ -165,6 +169,10 @@ class CategoryViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "categoryCell", for: indexPath)
         cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories added."
+        if let color = categories?[indexPath.row].color, let categoryColor = UIColor(hexString: color) {
+            cell.backgroundColor = categoryColor
+            cell.textLabel?.textColor = ContrastColorOf(categoryColor, returnFlat: true)
+        }
         return cell
     }
     
@@ -176,9 +184,11 @@ class CategoryViewController: UITableViewController {
                 let alert = UIAlertController(title: "Edit the category", message: "", preferredStyle: .alert)
                 let addAction  = UIAlertAction(title: "Edit Category", style: .default) { _ in
                     if let category = alert.textFields?.first?.text, category != "" {
-                        let categoryTobeEdited = self.categories?[indexPath.row]
-                        categoryTobeEdited?.name = category
-                        self.saveCategories()
+                        try? self.realm.write {
+                            let categoryTobeEdited = self.categories?[indexPath.row]
+                            categoryTobeEdited?.name = category
+                        }
+                        //self.saveCategories()
                         self.tableView.reloadRows(at: [indexPath], with: .right)
                         completion(true)
                     }
@@ -201,10 +211,15 @@ class CategoryViewController: UITableViewController {
             handler: { (_, _, completion) in
                 if let context = self.context {
                     //context.delete(self.categories[indexPath.row])
-                    self.saveCategories()
+                    //self.saveCategories()
                     //self.categories.remove(at: indexPath.row)
-                    self.tableView.deleteRows(at: [indexPath], with: .automatic)
-                    completion(true)
+                    if let category = self.categories?[indexPath.row] {
+                        try? self.realm.write {
+                            self.realm.delete(category)
+                        }
+                        self.tableView.deleteRows(at: [indexPath], with: .automatic)
+                        completion(true)
+                    }
                 }
         })
         
